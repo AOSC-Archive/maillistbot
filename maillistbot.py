@@ -32,7 +32,8 @@ resourcepath = lambda *res: os.path.normpath(
         os.path.join(os.getcwd(), os.path.dirname(__file__), *res))
 
 re_greetings = re.compile('^(Hi|Dear|To whom|Hello).*,$', re.I)
-re_endings = re.compile('Yours|Best|Thank|Regards|Sincerely|Cheers.*,$', re.I)
+re_endings = re.compile('(Yours|Best|Thank|Regards|Sincerely|Cheers).*,$', re.I)
+re_quotehead = re.compile('\d+:\d+.*[,， ].+[,:：]$', re.I)
 re_word = re.compile('\w+')
 
 class BotAPIFailed(Exception):
@@ -167,14 +168,19 @@ def remove_quotes(text):
         l = ln.strip()
         if not l:
             quoted = False
+        elif l.startswith('>'):
+            quoted = bool(l.lstrip('> '))
+            continue
         elif quoted:
             continue
-        elif l.startswith('>'):
-            quoted = True
+        elif re_greetings.match(l) or re_quotehead.search(l):
+            print(l)
             continue
-        elif re_greetings.match(l) or re_endings.search(l):
-            continue
+        elif re_endings.search(l) or l == '--':
+            print('e',l)
+            break
         out.append(l)
+    print(out)
     return '\n'.join(out).strip()
 
 def tokenize_document(text):
