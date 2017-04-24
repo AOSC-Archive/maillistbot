@@ -174,13 +174,10 @@ def remove_quotes(text):
         elif quoted:
             continue
         elif re_greetings.match(l) or re_quotehead.search(l):
-            print(l)
             continue
         elif re_endings.search(l) or l == '--':
-            print('e',l)
             break
         out.append(l)
-    print(out)
     return '\n'.join(out).strip()
 
 def tokenize_document(text):
