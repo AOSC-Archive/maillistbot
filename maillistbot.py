@@ -33,8 +33,9 @@ resourcepath = lambda *res: os.path.normpath(
 
 re_greetings = re.compile('^(Hi|Dear|To whom|Hello).*,$', re.I)
 re_endings = re.compile('(Yours|Best|Thank|Regards|Sincerely|Cheers).*,$', re.I)
-re_quotehead = re.compile('\d+:\d+.*[,， ].+[,:：]$', re.I)
-re_word = re.compile('\w+')
+re_quotehead = re.compile(r'\d+:\d+.*[,， ].+[,:：]$', re.I)
+re_word = re.compile(r'\w+')
+re_whitespace = re.compile(r'\s+')
 
 class BotAPIFailed(Exception):
     def __init__(self, ret):
@@ -100,7 +101,7 @@ class IMAPClient:
         if all(r[1] not in self.lists for r in all_recipients):
             return
         return (
-            decode_header(message['Subject']),
+            re_whitespace.sub(' ', decode_header(message['Subject'])),
             message['From'],
             self.get_email_content(message)
         )
