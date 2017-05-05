@@ -138,25 +138,16 @@ class IMAPClient:
     def get_email_content(self, message):
         maintype = message.get_content_maintype()
         textcontent = htmlcontent = None
-        if maintype == 'multipart':
-            for part in message.get_payload():
-                if part.get_content_maintype() != 'text':
-                    continue
-                subtype = part.get_content_subtype()
-                if subtype == 'plain':
-                    raw = part.get_payload(decode=True)
-                    textcontent = raw.decode(part.get_content_charset('utf-8'), errors='ignore')
-                elif subtype == 'html':
-                    raw = part.get_payload(decode=True)
-                    htmlcontent = raw.decode(part.get_content_charset('utf-8'), errors='ignore')
-        elif maintype == 'text':
-            subtype = message.get_content_subtype()
-            if subtype == 'plain':
-                raw = message.get_payload(decode=True)
-                textcontent = raw.decode(message.get_content_charset('utf-8'), errors='ignore')
-            elif subtype == 'html':
-                raw = message.get_payload(decode=True)
-                htmlcontent = raw.decode(message.get_content_charset('utf-8'), errors='ignore')
+        for part in message.walk():
+            if part.get_content_maintype() != 'text':
+                continue
+            subtype = part.get_content_subtype()
+            if subtype == 'plain' and not textcontent:
+                raw = part.get_payload(decode=True)
+                textcontent = raw.decode(part.get_content_charset('utf-8'), errors='ignore')
+            elif subtype == 'html' and not htmlcontent:
+                raw = part.get_payload(decode=True)
+                htmlcontent = raw.decode(part.get_content_charset('utf-8'), errors='ignore')
         if textcontent:
             return textcontent
         elif htmlcontent:
@@ -280,11 +271,15 @@ def send_message_for_mail(bot, mail, chat_id):
     if subject.startswith('Re: '):
         subject = subject[4:]
     from_name = email.utils.parseaddr(from_)[0]
-    summary = ' '.join(s.sentence for s in
-        summarizer(tokenize_document(remove_quotes(content)), 1))
+    if content:
+        summary = ' '.join(s.sentence for s in
+            summarizer(tokenize_document(remove_quotes(content)), 1))
+    else:
+        summary = ''
     logging.info('Message from %s: %s (%s)' % (from_name, subject, summary))
     bot.sendMessage(
-        chat_id=chat_id, text='%s: %s\n%s' % (from_name, subject, summary))
+        chat_id=chat_id,
+        text=('%s: %s\n%s' % (from_name, subject, summary)).strip())
 
 def load_config(filename):
     cp = configparser.ConfigParser()
