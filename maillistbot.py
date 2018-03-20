@@ -119,7 +119,9 @@ class IMAPClient:
                 continue
             self.processed.add(uid)
             result, data = self.mail.uid('fetch', uid, '(RFC822)')
-            texts.append(self.process_mail(self.parse_fetch(data)))
+            parsed = self.parse_fetch(data)
+            if parsed:
+                texts.append(self.process_mail(parsed))
         return texts
 
     def update_idle(self):
